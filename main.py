@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI, HTTPException,Request
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.websockets import WebSocket,WebSocketDisconnect
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from exceptions import StoryException
 from routers import blog_get,user,product,article,blog_post,file
 from auth import authentication
@@ -10,7 +11,8 @@ from db.database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import time
-
+import json
+from client import html
 
 app= FastAPI()
 app.include_router(templates.router)
@@ -33,6 +35,64 @@ def story_exception_handler(request:Request, exc: StoryException):
         status_code=418,
         content={'detail': exc.name}
     )
+
+
+@app.get("/chat")
+async def get():
+    return HTMLResponse(html)
+
+clients=[]
+usernames = {}
+chat_history = []
+
+@app.websocket("/chat/message")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    clients.append(websocket)
+    
+    try:
+        # Wait for the client to send the join message with their username
+        join_data = await websocket.receive_text()
+        join_json = json.loads(join_data)
+        if join_json.get("type") == "join" and "user" in join_json:
+            usernames[websocket] = join_json["user"]
+
+            # Send chat history to new user, prefixing messages with usernames
+            for msg in chat_history:
+                await websocket.send_text(msg)
+
+        else:
+            await websocket.close()
+            return
+
+        while True:
+            data = await websocket.receive_text()
+            data_json = json.loads(data)
+
+            if data_json.get("type") == "chat":
+                user = usernames.get(websocket, "Unknown")
+                message = f"{user}: {data_json.get('message', '')}"
+
+                if data_json.get("message") == "almight_delete" and user == "kokar":
+                    chat_history.clear()
+                    for client in clients:
+                        await client.send_text("🧹 All messages were deleted.")
+                    continue
+
+                chat_history.append(message)
+
+                # Broadcast to all clients except sender
+                for client in clients:
+                    if client != websocket:
+                        await client.send_text(message)
+
+            else:
+                # Ignore unknown message types or handle as needed
+                pass
+
+    except WebSocketDisconnect:
+        clients.remove(websocket)
+        usernames.pop(websocket, None)
 
 @app.exception_handler(HTTPException)
 def custom_handler(request: Request, exc: HTTPException):
