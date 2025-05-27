@@ -149,7 +149,7 @@ html = """
 </html>
 """
 ''' <script>
-    const ws = new WebSocket(`ws://${window.location.host}/chat/message`);
+    const ws = new WebSocket(`wss://${window.location.host}/chat/message`);
     const chat = document.getElementById("chat");
     const input = document.getElementById("messageText");
 
