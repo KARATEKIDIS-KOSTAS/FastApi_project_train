@@ -55,3 +55,8 @@ class Current_user_ArticleDisplay(BaseModel):
     current_user: CurrentUserDisplay
     class Config():
         orm_mode=True
+
+class ProductBase(BaseModel):
+    title: str
+    description: str
+    price: float
