@@ -109,7 +109,7 @@ html = """
       username = prompt("Enter your nickname:");
     }
 
-    const ws = new WebSocket("ws://localhost:8000/chat/message");
+    const ws = new WebSocket(`wss://${window.location.host}/chat/message`);
     const chat = document.getElementById("chat");
     const input = document.getElementById("messageText");
 
