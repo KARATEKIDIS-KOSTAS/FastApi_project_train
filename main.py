@@ -9,6 +9,8 @@ from templates import templates
 from db.database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import time
+
 
 app= FastAPI()
 app.include_router(templates.router)
@@ -35,6 +37,14 @@ def story_exception_handler(request:Request, exc: StoryException):
 @app.exception_handler(HTTPException)
 def custom_handler(request: Request, exc: HTTPException):
     return PlainTextResponse(str(exc),status_code=400)
+
+@app.middleware("http")# it will run when any endpoint is being executed calculating the time it needs for the endpoint function to be completed
+async def add_middleware(request: Request, call_next):
+    start_time=time.time()
+    response= await call_next(request)
+    duration= time.time()-start_time
+    response.headers["duration"]=str(duration)
+    return response
 
 add_origins=['http://localhost:3000'] # allow call from local application to this local API
 
