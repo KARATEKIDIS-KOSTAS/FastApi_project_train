@@ -1,1 +1,3 @@
 MyAPI:Template read for product with id 3
+MyApp:
+	http://127.0.0.1:8000/dependencies?test=asd&separator=asda&tag=MyApp

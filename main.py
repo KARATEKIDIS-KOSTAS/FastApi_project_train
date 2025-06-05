@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException,Request
 from fastapi.websockets import WebSocket,WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from exceptions import StoryException
-from routers import blog_get,user,product,article,blog_post,file
+from routers import blog_get,user,product,article,blog_post,file,dependencies
 from auth import authentication
 from db import models
 from templates import templates
@@ -14,7 +14,8 @@ import time
 import json
 from client import html
 
-app= FastAPI()
+app= FastAPI()#dependencies=[]# this for global dependencies for all app not just router
+app.include_router(dependencies.router)
 app.include_router(templates.router)
 app.include_router(blog_get.router)
 app.include_router(file.router)
